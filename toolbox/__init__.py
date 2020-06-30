@@ -8,6 +8,7 @@ from toolbox.utterance import Utterance
 import numpy as np
 import traceback
 import sys
+import librosa
 
 
 # Use this directory structure for your datasets, or modify it to fit your needs
@@ -32,6 +33,7 @@ recognized_datasets = [
     "VoxCeleb2/dev/aac",
     "VoxCeleb2/test/aac",
     "VCTK-Corpus/wav48",
+    "UserAudio"
 ]
 
 class Toolbox:
@@ -177,7 +179,6 @@ class Toolbox:
         self.ui.draw_spec(spec, "generated")
         self.current_generated = (self.ui.selected_utterance.speaker_name, spec, breaks, None)
         self.ui.set_loading(0)
-
     def vocode(self):
         speaker_name, spec, breaks, _ = self.current_generated
         assert spec is not None
@@ -226,6 +227,17 @@ class Toolbox:
         # Plot it
         self.ui.draw_embed(embed, name, "generated")
         self.ui.draw_umap_projections(self.utterances)
+
+
+        #https://github.com/CorentinJ/Real-Time-Voice-Cloning/issues/181
+        generated_wav = wav
+        num_generated = 0
+        filename = name + "_demo_output_toolbox_%02d.wav" % num_generated
+        librosa.output.write_wav(filename, generated_wav.astype(np.float32), 
+                                    Synthesizer.sample_rate)
+        num_generated += 1
+
+        print("\nSaved output as %s\n\n" % filename)
         
     def init_encoder(self):
         model_fpath = self.ui.current_encoder_fpath
@@ -249,3 +261,18 @@ class Toolbox:
         vocoder.load_model(model_fpath)
         self.ui.log("Done (%dms)." % int(1000 * (timer() - start)), "append")
         self.ui.set_loading(0)
+
+"""
+       spec=synthesize(spec)
+        num_generated = 0 
+        generated_wav=vocoder.infer_waveform(spec, progress_callback=vocoder_progress)
+        generated_wav = np.pad(generated_wav, (0, Synthesizer.sample_rate), mode="constant")
+        filename = "demo_output_toolbox_%02d.wav" % num_generated
+        librosa.output.write_wav(filename, generated_wav.astype(np.float32), 
+                                    Synthesizer.sample_rate)
+        num_generated += 1
+
+        print("\nSaved output as %s\n\n" % filename)
+        """
+
+ 
